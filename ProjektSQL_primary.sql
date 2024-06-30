@@ -45,7 +45,8 @@ CREATE TABLE t_Martin_Dvorak_project_SQL_primary_final AS   -- Vytvoření finá
 SELECT * FROM temp_t_Martin_Dvorak_project_SQL_primary_final 
 GROUP BY combined_ID ; 
 
-/* Nyní máme vytvořenou tabulku, kde je každému záznamu průměrné mzdy každého odvětí přiřazen první záznam průměrné ceny za celou ČR v danném kvartálu sledovaných potravin */
+/* Nyní máme vytvořenou tabulku, kde je každému záznamu průměrné mzdy
+   každého odvětí přiřazen první záznam průměrné ceny za celou ČR v danném kvartálu sledovaných potravin */
 
 
 

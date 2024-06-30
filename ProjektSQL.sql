@@ -45,3 +45,4 @@ ORDER BY industry_branch_code ,
 	czechia_price_adjusted.date_from;
 
 
+-- just a test for comit validation

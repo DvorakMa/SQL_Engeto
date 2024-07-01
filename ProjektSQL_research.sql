@@ -2,8 +2,8 @@
 -- Query 1.1
 SELECT 
 	t_max.industry_branch_code ,
-	t_max.salary ,
-	t_min.salary
+	t_max.salary AS Salary_2018 ,
+	t_min.salary AS Salary_2006
 FROM t_martin_dvorak_project_sql_primary_final t_max
 LEFT JOIN
 	(SELECT industry_branch_code ,salary 
@@ -16,9 +16,6 @@ WHERE payroll_year=2018
 	AND payroll_quarter =4 
 	AND category_code =111101
 GROUP BY t_max.industry_branch_code ;
-
-
-
 
 
 
@@ -77,4 +74,14 @@ WHERE table_08 .category_code IN (111301,114201)
 	AND table_08 .`year` =2006
 	AND table_08 .quarter =1;
 
+
+-- Query 3
+ -- TBD překlopit na sebe tuto tabulku s odsazením  , maybe WITH? uděalt rozdíl a ten pak zprůmněrovat přes COUNT 
+ SELECT
+ 	main.`year` ,
+ 	main.quarter ,
+	 main.category_code,
+	 main.price
+ FROM t_martin_dvorak_project_sql_primary_final main 
+ GROUP BY category_code ,`year` ,quarter ;
 

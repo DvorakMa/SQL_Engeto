@@ -76,12 +76,38 @@ WHERE table_08 .category_code IN (111301,114201)
 
 
 -- Query 3
- -- TBD překlopit na sebe tuto tabulku s odsazením  , maybe WITH? uděalt rozdíl a ten pak zprůmněrovat přes COUNT 
- SELECT
- 	main.`year` ,
- 	main.quarter ,
-	 main.category_code,
-	 main.price
- FROM t_martin_dvorak_project_sql_primary_final main 
- GROUP BY category_code ,`year` ,quarter ;
+ WITH temp_table AS
+	 (
+	 SELECT
+	 	main.name,
+ 		main.category_code,
+ 		main.`year` ,
+ 		main.quarter ,
+		main.price,
+		secondary.price AS price_next_year,
+		ROUND((((secondary.price/main.price)*100)-100),2) AS percentage_diff
+ 	FROM t_martin_dvorak_project_sql_primary_final main 
+	 LEFT JOIN 
+ 		( SELECT
+ 		temp.category_code,
+ 		temp.`year` ,
+ 		temp.quarter ,
+		temp.price
+		FROM t_martin_dvorak_project_sql_primary_final temp 
+ 		GROUP BY category_code ,`year` ,quarter 
+		) secondary
+	 ON main.`year`+1 =secondary.`year` 
+	 	AND main.quarter =secondary.quarter 
+		AND main.category_code =secondary.category_code
+	 WHERE secondary.YEAR IS NOT NULL
+	 GROUP BY main.category_code ,main.`year` ,main.quarter 
+ )
+ SELECT name,
+ AVG(percentage_diff) AS avg_increase
+ FROM temp_table
+ GROUP BY category_code
+ ORDER BY avg_increase DESC;
+ 
+ 
+ 
 

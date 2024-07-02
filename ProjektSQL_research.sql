@@ -108,6 +108,73 @@ WHERE table_08 .category_code IN (111301,114201)
  GROUP BY category_code
  ORDER BY avg_increase DESC;
  
- 
- 
+ -- Query 4.1
+SELECT       -- výstupem je zde tabulka, která porovnává zjištěné meziroční procentuální rozdíly mezd a cen jednotlivých kategorií potravin za každý kvartál
+ 	main.industry_branch_code ,
+ 	ROUND((((secondary.price/main.price)*100)-100),2) -ROUND((((secondary.salary/main.salary)*100)-100),2)  AS percentage_pts_annual_buying_power_diff,
+ 	main.category_code,
+ 	main.`year` ,
+ 	main.quarter ,
+	main.price,
+	secondary.price AS price_next_year,
+	ROUND((((secondary.price/main.price)*100)-100),2) AS percentage_diff,   -- výpočet procent
+	ROUND((((secondary.salary/main.salary)*100)-100),2) AS percentage_diff_salary,
+	main.salary ,
+	secondary.salary as salary_next_year
+FROM t_martin_dvorak_project_sql_primary_final main 
+LEFT JOIN 
+	( SELECT
+ 	temp.category_code,
+ 	temp.industry_branch_code,
+ 	temp.`year` ,
+ 	temp.quarter ,
+	temp.price,
+	temp.salary
+	FROM t_martin_dvorak_project_sql_primary_final temp 
+ 	GROUP BY category_code ,`year` ,quarter ,industry_branch_code 
+	) secondary
+ON main.`year`+1 =secondary.`year`  -- opět překlopení tabulky na sebe a posunutí hodnot o jeden rok 
+	AND main.quarter =secondary.quarter 
+	AND main.category_code =secondary.category_code
+	and main.industry_branch_code =secondary.industry_branch_code
+WHERE secondary.YEAR IS NOT null and ROUND((((secondary.price/main.price)*100)-100),2) -ROUND((((secondary.salary/main.salary)*100)-100),2) >10 
+GROUP by main. industry_branch_code , main.category_code ,main.`year` ,main.quarter ;
 
+
+-- Query 4.2
+with support as (
+SELECT       
+ 	main.industry_branch_code ,
+ 	ROUND((((secondary.price/main.price)*100)-100),2) -ROUND((((secondary.salary/main.salary)*100)-100),2)  AS percentage_pts_annual_buying_power_diff,
+ 	main.category_code,
+ 	main.`year` ,
+ 	main.quarter ,
+	main.price,
+	secondary.price AS price_next_year,
+	ROUND((((secondary.price/main.price)*100)-100),2) AS percentage_diff,   -- výpočet procent
+	ROUND((((secondary.salary/main.salary)*100)-100),2) AS percentage_diff_salary,
+	main.salary ,
+	secondary.salary as salary_next_year
+FROM t_martin_dvorak_project_sql_primary_final main 
+LEFT JOIN 
+	( SELECT
+ 	temp.category_code,
+ 	temp.industry_branch_code,
+ 	temp.`year` ,
+ 	temp.quarter ,
+	temp.price,
+	temp.salary
+	FROM t_martin_dvorak_project_sql_primary_final temp 
+ 	GROUP BY category_code ,`year` ,quarter ,industry_branch_code 
+	) secondary
+ON main.`year`+1 =secondary.`year`  -- opět překlopení tabulky na sebe a posunutí hodnot o jeden rok 
+	AND main.quarter =secondary.quarter 
+	AND main.category_code =secondary.category_code
+	and main.industry_branch_code =secondary.industry_branch_code
+WHERE secondary.YEAR IS NOT null and ROUND((((secondary.price/main.price)*100)-100),2) -ROUND((((secondary.salary/main.salary)*100)-100),2) >10 
+GROUP by main. industry_branch_code , main.category_code ,main.`year` ,main.quarter 
+)
+select year,count(year)   -- zde se díváme na počet případů, kdy byl rozdíl růstu mezd a cen větší jak 10 procentních bodů 
+from support
+group by year
+order by count(year);

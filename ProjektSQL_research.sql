@@ -178,3 +178,15 @@ select year,count(year)   -- zde se díváme na počet případů, kdy byl rozd�
 from support
 group by year
 order by count(year);
+
+
+-- Query 5 
+select main.year,main.gdp,secondary.gdp,secondary.year,
+ROUND((((secondary.gdp/main.gdp)*100)-100),2) as gdp_change
+from t_martin_dvorak_project_sql_secondary_final main
+left join (select year,gdp
+from t_martin_dvorak_project_sql_secondary_final tmdpssf 
+where country ='Czech Republic'
+) secondary
+on main.year+1=secondary.year
+where country ='Czech Republic' and secondary.year is not null;

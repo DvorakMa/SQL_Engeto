@@ -56,7 +56,8 @@ SELECT
 	table_18.can_buy_2018
 FROM t_martin_dvorak_project_sql_primary_final table_08 
 LEFT JOIN 
-	(SELECT	
+	(
+	SELECT	
 		sub_table.branch_name ,
 		sub_table.salary ,
 		sub_table.price ,
@@ -67,8 +68,7 @@ LEFT JOIN
 		AND `year` =2018
 		AND quarter =4
 	) table_18 
-	ON
-	table_18.category_code=table_08.category_code 
+ON table_18.category_code=table_08.category_code 
 	AND table_08.branch_name =table_18.branch_name
 WHERE table_08 .category_code IN (111301,114201) 
 	AND table_08 .`year` =2006
@@ -77,8 +77,8 @@ WHERE table_08 .category_code IN (111301,114201)
 
 -- Query 3
  WITH temp_table AS
-	 (
-	 SELECT
+	(
+	SELECT
 	 	main.name,
  		main.category_code,
  		main.`year` ,
@@ -86,22 +86,23 @@ WHERE table_08 .category_code IN (111301,114201)
 		main.price,
 		secondary.price AS price_next_year,
 		ROUND((((secondary.price/main.price)*100)-100),2) AS percentage_diff
- 	FROM t_martin_dvorak_project_sql_primary_final main 
-	 LEFT JOIN 
- 		( SELECT
- 		temp.category_code,
- 		temp.`year` ,
- 		temp.quarter ,
-		temp.price
+	FROM t_martin_dvorak_project_sql_primary_final main 
+	LEFT JOIN 
+ 		(
+ 		SELECT
+ 			temp.category_code,
+ 			temp.`year` ,
+ 			temp.quarter ,
+			temp.price
 		FROM t_martin_dvorak_project_sql_primary_final temp 
  		GROUP BY category_code ,`year` ,quarter 
 		) secondary
-	 ON main.`year`+1 =secondary.`year` 
-	 	AND main.quarter =secondary.quarter 
+	ON main.`year`+1 =secondary.`year` 
+		AND main.quarter =secondary.quarter 
 		AND main.category_code =secondary.category_code
-	 WHERE secondary.YEAR IS NOT NULL
-	 GROUP BY main.category_code ,main.`year` ,main.quarter 
- )
+	WHERE secondary.YEAR IS NOT NULL
+	GROUP BY main.category_code ,main.`year` ,main.quarter 
+ 	)
  SELECT name,
  AVG(percentage_diff) AS avg_increase
  FROM temp_table
@@ -123,26 +124,28 @@ SELECT       -- výstupem je zde tabulka, která porovnává zjištěné meziro�
 	secondary.salary as salary_next_year
 FROM t_martin_dvorak_project_sql_primary_final main 
 LEFT JOIN 
-	( SELECT
- 	temp.category_code,
- 	temp.industry_branch_code,
- 	temp.`year` ,
- 	temp.quarter ,
-	temp.price,
-	temp.salary
-	FROM t_martin_dvorak_project_sql_primary_final temp 
- 	GROUP BY category_code ,`year` ,quarter ,industry_branch_code 
+	(SELECT
+ 		temp.category_code,
+ 		temp.industry_branch_code,
+ 		temp.`year` ,
+ 		temp.quarter ,
+		temp.price,
+		temp.salary
+		FROM t_martin_dvorak_project_sql_primary_final temp 
+ 		GROUP BY category_code ,`year` ,quarter ,industry_branch_code 
 	) secondary
 ON main.`year`+1 =secondary.`year`  -- opět překlopení tabulky na sebe a posunutí hodnot o jeden rok 
 	AND main.quarter =secondary.quarter 
 	AND main.category_code =secondary.category_code
-	and main.industry_branch_code =secondary.industry_branch_code
-WHERE secondary.YEAR IS NOT null and ROUND((((secondary.price/main.price)*100)-100),2) -ROUND((((secondary.salary/main.salary)*100)-100),2) >10 
+	AND main.industry_branch_code =secondary.industry_branch_code
+WHERE secondary.year IS NOT NULL
+	AND ROUND((((secondary.price/main.price)*100)-100),2) -ROUND((((secondary.salary/main.salary)*100)-100),2) >10 
 GROUP by main. industry_branch_code , main.category_code ,main.`year` ,main.quarter ;
 
 
 -- Query 4.2
-with support as (
+WITH support AS 
+(
 SELECT       
  	main.industry_branch_code ,
  	ROUND((((secondary.price/main.price)*100)-100),2) -ROUND((((secondary.salary/main.salary)*100)-100),2)  AS percentage_pts_annual_buying_power_diff,
@@ -157,36 +160,47 @@ SELECT
 	secondary.salary as salary_next_year
 FROM t_martin_dvorak_project_sql_primary_final main 
 LEFT JOIN 
-	( SELECT
- 	temp.category_code,
- 	temp.industry_branch_code,
- 	temp.`year` ,
- 	temp.quarter ,
-	temp.price,
-	temp.salary
-	FROM t_martin_dvorak_project_sql_primary_final temp 
- 	GROUP BY category_code ,`year` ,quarter ,industry_branch_code 
+	(SELECT
+ 		temp.category_code,
+ 		temp.industry_branch_code,
+ 		temp.`year` ,
+ 		temp.quarter ,
+		temp.price,
+		temp.salary
+	 FROM t_martin_dvorak_project_sql_primary_final temp 
+ 	 GROUP BY category_code ,`year` ,quarter ,industry_branch_code 
 	) secondary
 ON main.`year`+1 =secondary.`year`  -- opět překlopení tabulky na sebe a posunutí hodnot o jeden rok 
 	AND main.quarter =secondary.quarter 
 	AND main.category_code =secondary.category_code
-	and main.industry_branch_code =secondary.industry_branch_code
-WHERE secondary.YEAR IS NOT null and ROUND((((secondary.price/main.price)*100)-100),2) -ROUND((((secondary.salary/main.salary)*100)-100),2) >10 
-GROUP by main. industry_branch_code , main.category_code ,main.`year` ,main.quarter 
+	AND main.industry_branch_code =secondary.industry_branch_code
+WHERE secondary.YEAR IS NOT NULL 
+	AND ROUND((((secondary.price/main.price)*100)-100),2) -ROUND((((secondary.salary/main.salary)*100)-100),2) >10 
+GROUP BY main. industry_branch_code , main.category_code ,main.`year` ,main.quarter 
 )
-select year,count(year)   -- zde se díváme na počet případů, kdy byl rozdíl růstu mezd a cen větší jak 10 procentních bodů 
-from support
-group by year
-order by count(year);
+SELECT 
+	year,
+	COUNT(year)   -- zde se díváme na počet případů, kdy byl rozdíl růstu mezd a cen větší jak 10 procentních bodů 
+FROM support
+GROUP BY year
+ORDER BY COUNT(year);
 
 
 -- Query 5 
-select main.year,main.gdp,secondary.gdp,secondary.year,
-ROUND((((secondary.gdp/main.gdp)*100)-100),2) as gdp_change
-from t_martin_dvorak_project_sql_secondary_final main
-left join (select year,gdp
-from t_martin_dvorak_project_sql_secondary_final tmdpssf 
-where country ='Czech Republic'
-) secondary
-on main.year+1=secondary.year
-where country ='Czech Republic' and secondary.year is not null;
+SELECT
+	main.year,
+	main.gdp,
+	secondary.gdp,
+	secondary.year,
+	ROUND((((secondary.gdp/main.gdp)*100)-100),2) as gdp_change
+FROM t_martin_dvorak_project_sql_secondary_final main
+LEFT JOIN 
+	(SELECT 
+		year,
+		gdp
+	FROM t_martin_dvorak_project_sql_secondary_final tmdpssf 
+	WHERE country ='Czech Republic'
+	) secondary
+ON main.year+1=secondary.year
+WHERE country ='Czech Republic' 
+	AND secondary.year IS NOT NULL;

@@ -22,7 +22,7 @@ GROUP BY t_max.industry_branch_code ;
 
 -- Query 1.2
 
-SELECT		
+SELECT
 	main.branch_name ,
 	secondary.payroll_year,
 	secondary.avg_monthly_salary_secondary,
@@ -104,10 +104,10 @@ WHERE table_08 .category_code IN (111301,114201)
 	GROUP BY main.category_code ,main.`year` ,main.quarter 
  	)
  SELECT name,
- AVG(percentage_diff) AS avg_increase
+ ROUND(AVG(percentage_diff),2) AS avg_increase
  FROM temp_table
  GROUP BY category_code
- ORDER BY avg_increase DESC;
+ ORDER BY avg_increase ASC;
  
  -- Query 4.1
 SELECT       -- výstupem je zde tabulka, která porovnává zjištěné meziroční procentuální rozdíly mezd a cen jednotlivých kategorií potravin za každý kvartál
@@ -139,7 +139,7 @@ ON main.`year`+1 =secondary.`year`  -- opět překlopení tabulky na sebe a posu
 	AND main.category_code =secondary.category_code
 	AND main.industry_branch_code =secondary.industry_branch_code
 WHERE secondary.year IS NOT NULL
-	AND ROUND((((secondary.price/main.price)*100)-100),2) -ROUND((((secondary.salary/main.salary)*100)-100),2) >10 
+	AND ROUND((((secondary.price/main.price)*100)-100),2) -ROUND((((secondary.salary/main.salary)*100)-100),2) >10   -- rozdíl růstu mzdy a ceny více jak 10 procentních bodů
 GROUP by main. industry_branch_code , main.category_code ,main.`year` ,main.quarter ;
 
 
@@ -186,11 +186,10 @@ GROUP BY year
 ORDER BY COUNT(year);
 
 
--- Query 5 
-SELECT
-	main.year,
-	main.gdp,
-	secondary.gdp,
+-- Query 5.1
+WITH temp AS 
+(
+SELECT          -- výpočet změny GDP
 	secondary.year,
 	ROUND((((secondary.gdp/main.gdp)*100)-100),2) as gdp_change
 FROM t_martin_dvorak_project_sql_secondary_final main
@@ -203,4 +202,76 @@ LEFT JOIN
 	) secondary
 ON main.year+1=secondary.year
 WHERE country ='Czech Republic' 
-	AND secondary.year IS NOT NULL;
+	AND secondary.year IS NOT NULL
+)    -- výpočet změny GDP
+SELECT
+	main.branch_name ,
+	secondary.payroll_year,
+	-- secondary.avg_monthly_salary_secondary AS avg_salary_this_year,
+	-- ROUND(AVG(salary)) AS avg_salary_last_year,
+	ROUND((((secondary.avg_monthly_salary_secondary / ROUND(AVG(salary)))*100)-100),2) AS percentage_salary_change ,
+	temp.gdp_change AS percentage_gdp_change
+FROM t_martin_dvorak_project_sql_primary_final main 
+LEFT JOIN
+	(SELECT 
+		payroll_year ,
+		branch_name ,
+		industry_branch_code ,
+		ROUND(AVG(salary)) AS avg_monthly_salary_secondary
+	FROM t_martin_dvorak_project_sql_primary_final main
+	GROUP BY payroll_year,industry_branch_code  
+	ORDER BY industry_branch_code ,payroll_year
+	) secondary
+ON
+	secondary.payroll_year =main.payroll_year +1 
+	 AND main.industry_branch_code =secondary.industry_branch_code 
+LEFT JOIN temp 
+ON
+	temp.YEAR =secondary.payroll_year
+WHERE secondary.payroll_year IS NOT NULL
+GROUP BY main.payroll_year, main.industry_branch_code  
+ORDER BY main.industry_branch_code ,main.payroll_year   ASC;
+
+
+-- Query 5.2
+WITH temp AS 
+(
+SELECT          -- výpočet změny GDP
+	secondary.year,
+	ROUND((((secondary.gdp/main.gdp)*100)-100),2) as gdp_change
+FROM t_martin_dvorak_project_sql_secondary_final main
+LEFT JOIN 
+	(SELECT 
+		year,
+		gdp
+	FROM t_martin_dvorak_project_sql_secondary_final tmdpssf 
+	WHERE country ='Czech Republic'
+	) secondary
+ON main.year+1=secondary.year
+WHERE country ='Czech Republic' 
+	AND secondary.year IS NOT NULL
+)    -- výpočet změny GDP
+SELECT
+	main.name,
+ 	main.`year` ,
+ 	main.quarter ,
+	ROUND((((main.price/secondary.price)*100)-100),2) AS price_percentage_diff,
+	temp.gdp_change
+FROM t_martin_dvorak_project_sql_primary_final main 
+LEFT JOIN 
+ 	(
+ 	SELECT
+ 		temp.category_code,
+ 		temp.`year` ,
+ 		temp.quarter ,
+		temp.price
+	FROM t_martin_dvorak_project_sql_primary_final temp 
+ 	GROUP BY category_code ,`year` ,quarter 
+		) secondary
+ON main.`year` =secondary.`year` +1
+	AND main.quarter =secondary.quarter 
+	AND main.category_code =secondary.category_code
+LEFT JOIN temp
+ON main.YEAR=temp.year
+WHERE secondary.YEAR IS NOT NULL
+GROUP BY main.category_code ,main.`year` ,main.quarter ;

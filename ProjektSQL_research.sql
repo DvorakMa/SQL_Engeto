@@ -111,17 +111,13 @@ WHERE table_08 .category_code IN (111301,114201)
  
  -- Query 4.1
 SELECT       -- výstupem je zde tabulka, která porovnává zjištěné meziroční procentuální rozdíly mezd a cen jednotlivých kategorií potravin za každý kvartál
- 	main.industry_branch_code ,
+ 	main.industry_branch_code  as obor,
  	ROUND((((secondary.price/main.price)*100)-100),2) -ROUND((((secondary.salary/main.salary)*100)-100),2)  AS percentage_pts_annual_buying_power_diff,
- 	main.category_code,
+ 	main.category_code ,
  	main.`year` ,
  	main.quarter ,
-	main.price,
-	secondary.price AS price_next_year,
-	ROUND((((secondary.price/main.price)*100)-100),2) AS percentage_diff,   -- výpočet procent
-	ROUND((((secondary.salary/main.salary)*100)-100),2) AS percentage_diff_salary,
-	main.salary ,
-	secondary.salary as salary_next_year
+	ROUND((((secondary.price/main.price)*100)-100),2) AS percentage_diff_price,   -- výpočet procent
+	ROUND((((secondary.salary/main.salary)*100)-100),2) AS percentage_diff_salary
 FROM t_martin_dvorak_project_sql_primary_final main 
 LEFT JOIN 
 	(SELECT
@@ -207,8 +203,6 @@ WHERE country ='Czech Republic'
 SELECT
 	main.branch_name ,
 	secondary.payroll_year,
-	-- secondary.avg_monthly_salary_secondary AS avg_salary_this_year,
-	-- ROUND(AVG(salary)) AS avg_salary_last_year,
 	ROUND((((secondary.avg_monthly_salary_secondary / ROUND(AVG(salary)))*100)-100),2) AS percentage_salary_change ,
 	temp.gdp_change AS percentage_gdp_change
 FROM t_martin_dvorak_project_sql_primary_final main 
